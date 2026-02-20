@@ -44,7 +44,7 @@ function App() {
       <header className="app-header">
         <div>
           <h1>Expense Tracker</h1>
-          <p>Track your income and expenses easily</p>
+          <p>Track your income and expenses easily :)</p>
         </div>
         <button
           className="theme-toggle"
