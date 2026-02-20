@@ -1,10 +1,34 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-const TransactionForm = ({ onAdd }) => {
+const today = () => new Date().toISOString().split('T')[0];
+
+const TransactionForm = ({ onAdd, onUpdate, editingTransaction, onCancelEdit }) => {
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('income');
+  const [category, setCategory] = useState('General');
+  const [date, setDate] = useState(today());
   const [error, setError] = useState('');
+
+  const isEditing = !!editingTransaction;
+
+  useEffect(() => {
+    if (editingTransaction) {
+      setDescription(editingTransaction.description);
+      setAmount(String(editingTransaction.amount));
+      setType(editingTransaction.type);
+      setCategory(editingTransaction.category || 'General');
+      setDate(editingTransaction.date || today());
+      setError('');
+    } else {
+      setDescription('');
+      setAmount('');
+      setType('income');
+      setCategory('General');
+      setDate(today());
+      setError('');
+    }
+  }, [editingTransaction]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -18,22 +42,34 @@ const TransactionForm = ({ onAdd }) => {
       return;
     }
 
-    onAdd({
-      id: Date.now(),
+    const data = {
+      id: isEditing ? editingTransaction.id : Date.now(),
       description: description.trim(),
       amount: parseFloat(amount),
       type,
-    });
+      category,
+      date,
+    };
+
+    if (isEditing) {
+      onUpdate(data);
+    } else {
+      onAdd(data);
+    }
 
     setDescription('');
     setAmount('');
     setType('income');
+    setCategory('General');
+    setDate(today());
     setError('');
   };
 
+  const categories = ['General', 'Food', 'Transport', 'Shopping', 'Health', 'Bills', 'Entertainment', 'Salary', 'Other'];
+
   return (
     <form className="transaction-form" onSubmit={handleSubmit}>
-      <h2>Add Transaction</h2>
+      <h2 className="section-title">{isEditing ? 'Edit Transaction' : 'Add Transaction'}</h2>
 
       {error && <p className="form-error">{error}</p>}
 
@@ -63,19 +99,42 @@ const TransactionForm = ({ onAdd }) => {
 
       <div className="form-group">
         <label htmlFor="type">Type</label>
-        <select
-          id="type"
-          value={type}
-          onChange={(e) => setType(e.target.value)}
-        >
+        <select id="type" value={type} onChange={(e) => setType(e.target.value)}>
           <option value="income">Income</option>
           <option value="expense">Expense</option>
         </select>
       </div>
 
-      <button type="submit" className="btn-add">
-        Add Transaction
-      </button>
+      <div className="form-group">
+        <label htmlFor="category">Category</label>
+        <select id="category" value={category} onChange={(e) => setCategory(e.target.value)}>
+          {categories.map((c) => (
+            <option key={c} value={c}>{c}</option>
+          ))}
+        </select>
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="date">Date</label>
+        <input
+          id="date"
+          type="date"
+          value={date}
+          max={today()}
+          onChange={(e) => setDate(e.target.value)}
+        />
+      </div>
+
+      <div className="form-btn-group">
+        <button type="submit" className="btn-add">
+          {isEditing ? 'Update' : 'Add Transaction'}
+        </button>
+        {isEditing && (
+          <button type="button" className="btn-cancel" onClick={onCancelEdit}>
+            Cancel
+          </button>
+        )}
+      </div>
     </form>
   );
 };
